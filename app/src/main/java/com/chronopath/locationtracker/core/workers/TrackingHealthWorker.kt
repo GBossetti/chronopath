@@ -7,6 +7,7 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.chronopath.locationtracker.core.common.Constants
+import com.chronopath.locationtracker.core.services.LocationTrackingService
 import kotlinx.coroutines.delay
 import java.util.concurrent.TimeUnit
 
@@ -102,14 +103,10 @@ class TrackingHealthWorker (
     }
 
     private fun isForegroundServiceRunning(): Boolean {
-        // Check if our foreground service is running
-        // Implementation depends on how we track service state
-        // For now, return placeholder logic
-        return false // Will be implemented with actual service check
+        return LocationTrackingService.isRunning(applicationContext)
     }
 
     private fun restartTrackingService() {
-        // Start the foreground service
-        // Implementation will be added when we create the service
+        LocationTrackingService.start(applicationContext)
     }
 }

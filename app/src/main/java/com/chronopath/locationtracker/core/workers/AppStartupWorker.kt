@@ -6,6 +6,8 @@ import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkerParameters
+import com.chronopath.locationtracker.core.common.Constants
+import com.chronopath.locationtracker.core.services.LocationTrackingService
 
 
 /**
@@ -57,14 +59,15 @@ class AppStartupWorker (
         }
     }
 
-    private suspend fun wasTrackingActiveBeforeExit(): Boolean {
-        // Check SharedPreferences or Room for last known tracking state
-        // For now, return placeholder
-        return false
+    private fun wasTrackingActiveBeforeExit(): Boolean {
+        val prefs = applicationContext.getSharedPreferences(
+            Constants.PREFS_TRACKING_ACTIVE,
+            Context.MODE_PRIVATE
+        )
+        return prefs.getBoolean("is_tracking_active", false)
     }
 
     private fun restartTrackingService() {
-        // Start the foreground service
-        // Implementation will be added when we create the service
+        LocationTrackingService.start(applicationContext)
     }
 }
