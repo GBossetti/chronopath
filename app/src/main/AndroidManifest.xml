@@ -43,6 +43,12 @@
             android:authorities="${applicationId}.androidx-startup"
             android:exported="false"
             tools:node="merge">
+            <!-- Disable default WorkManager initializer -->
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+            <!-- Use our custom initializer -->
             <meta-data
                 android:name="com.chronopath.locationtracker.core.workers.WorkManagerInitializer"
                 android:value="androidx.startup" />
