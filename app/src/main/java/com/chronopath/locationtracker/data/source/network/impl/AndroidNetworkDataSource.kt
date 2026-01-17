@@ -9,6 +9,10 @@ class AndroidNetworkDataSource(
     private val context: Context
 ) : NetworkDataSource {
 
+    override fun getCurrentNetworkType(): String {
+        return "Unknown" // Simplified for now
+    }
+
     // Simplified implementation for brevity
     override val networkType: Flow<String> = flow {
         emit("Unknown")

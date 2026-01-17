@@ -8,6 +8,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.chronopath.locationtracker.core.common.Constants
 import com.chronopath.locationtracker.core.services.LocationTrackingService
+import timber.log.Timber
 
 
 /**
@@ -29,12 +30,15 @@ class AppStartupWorker (
     }
 
     override suspend fun doWork(): Result {
+        Timber.tag("Worker").i("AppStartupWorker - Starting startup check")
         return try {
             // Check if tracking was active before app was closed
             val wasTrackingActive = wasTrackingActiveBeforeExit()
+            Timber.tag("Worker").d("Was tracking active before exit: $wasTrackingActive")
 
             if (wasTrackingActive) {
                 // Restart tracking service
+                Timber.tag("Worker").i("Restoring tracking service on startup")
                 restartTrackingService()
 
                 Result.success(
@@ -43,6 +47,7 @@ class AppStartupWorker (
                         .build()
                 )
             } else {
+                Timber.tag("Worker").d("No tracking to restore")
                 Result.success(
                     Data.Builder()
                         .putString("action", "no_tracking_to_restore")
@@ -51,6 +56,7 @@ class AppStartupWorker (
             }
         } catch (e: Exception) {
             // Don't fail on startup - just log and continue
+            Timber.tag("Worker").e(e, "Startup worker encountered error")
             Result.success(
                 Data.Builder()
                     .putString("error", e.message ?: "startup_error")

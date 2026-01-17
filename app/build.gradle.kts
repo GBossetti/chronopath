@@ -39,6 +39,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.10"
@@ -85,7 +86,10 @@ dependencies {
 
     // Startup
     implementation(libs.androidx.startup.runtime)
-    
+
+    // Logging
+    implementation(libs.timber)
+
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

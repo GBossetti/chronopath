@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
  * ViewModel for the main tracking screen.
@@ -40,23 +41,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val error: StateFlow<String?> = _error.asStateFlow()
 
     init {
+        Timber.tag("ViewModel").d("MainViewModel initialized")
         checkTrackingStatus()
         observeLocationCount()
     }
 
     private fun checkTrackingStatus() {
         _isTracking.value = LocationTrackingService.isRunning(getApplication())
+        Timber.tag("ViewModel").d("checkTrackingStatus - isTracking: ${_isTracking.value}")
     }
 
     private fun observeLocationCount() {
         viewModelScope.launch {
             getLocationCountUseCase(Unit).collect { count ->
+                Timber.tag("ViewModel").d("Location count updated: $count")
                 _locationCount.value = count
             }
         }
     }
 
     fun startTracking() {
+        Timber.tag("ViewModel").i("startTracking - User initiated tracking start")
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
@@ -64,9 +69,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             when (val result = startTrackingUseCase(Unit)) {
                 is Result.Success -> {
                     _isTracking.value = true
+                    Timber.tag("ViewModel").i("Tracking started successfully")
                 }
                 is Result.Error -> {
                     _error.value = result.message ?: "Failed to start tracking"
+                    Timber.tag("ViewModel").e("Failed to start tracking: ${result.message}")
                 }
                 is Result.Loading -> { /* Handled by isLoading state */ }
             }
@@ -76,6 +83,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun stopTracking() {
+        Timber.tag("ViewModel").i("stopTracking - User initiated tracking stop")
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
@@ -83,9 +91,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             when (val result = stopTrackingUseCase(Unit)) {
                 is Result.Success -> {
                     _isTracking.value = false
+                    Timber.tag("ViewModel").i("Tracking stopped successfully")
                 }
                 is Result.Error -> {
                     _error.value = result.message ?: "Failed to stop tracking"
+                    Timber.tag("ViewModel").e("Failed to stop tracking: ${result.message}")
                 }
                 is Result.Loading -> { /* Handled by isLoading state */ }
             }

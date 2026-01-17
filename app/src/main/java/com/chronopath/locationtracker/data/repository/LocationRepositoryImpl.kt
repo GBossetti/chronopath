@@ -9,6 +9,7 @@ import com.chronopath.locationtracker.domain.model.Location
 import com.chronopath.locationtracker.domain.repository.LocationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 
 class LocationRepositoryImpl(
     private val database: LocationDatabase,
@@ -25,6 +26,9 @@ class LocationRepositoryImpl(
     }
 
     override suspend fun insertLocation(location: Location) {
+        Timber.tag("DB").d("insertLocation - lat: %.6f, lon: %.6f, timestamp: %s".format(
+            location.latitude, location.longitude, location.timestamp
+        ))
         locationDao.insertLocation(LocationMapper.mapToEntity(location))
     }
 
@@ -35,15 +39,19 @@ class LocationRepositoryImpl(
     override suspend fun saveLocation(location: Location): Result<Boolean> {
         return try {
             insertLocation(location)
+            Timber.tag("DB").i("saveLocation - Location saved successfully")
             Result.Success(true)
         } catch (e: Exception) {
+            Timber.tag("DB").e(e, "saveLocation - Failed to save location")
             Result.Error(e)
         }
     }
 
     override fun getLocationCount(): Flow<Int> {
         return kotlinx.coroutines.flow.flow {
-            emit(locationDao.getLocationCount())
+            val count = locationDao.getLocationCount()
+            Timber.tag("DB").d("getLocationCount - Total locations: $count")
+            emit(count)
         }
     }
 }

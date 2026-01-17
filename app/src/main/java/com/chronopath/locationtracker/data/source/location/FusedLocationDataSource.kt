@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 
 class FusedLocationDataSource(
     private val context: Context
@@ -24,6 +25,7 @@ class FusedLocationDataSource(
 
     @SuppressLint("MissingPermission")
     override suspend fun startTracking(intervalMillis: Long, minDistanceMeters: Float) {
+        Timber.tag("Location").i("startTracking - interval: ${intervalMillis}ms, minDistance: ${minDistanceMeters}m")
         // Stop any existing tracking
         stopTracking()
 
@@ -36,10 +38,14 @@ class FusedLocationDataSource(
             setMinUpdateDistanceMeters(minDistanceMeters)
             setWaitForAccurateLocation(false)
         }.build()
+        Timber.tag("Location").d("LocationRequest configured with HIGH_ACCURACY priority")
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let { location ->
+                    Timber.tag("Location").d("Location update - lat: %.6f, lon: %.6f, accuracy: %.1fm, provider: %s".format(
+                        location.latitude, location.longitude, location.accuracy, location.provider
+                    ))
                     _locationFlow.value = location
                 }
             }
@@ -50,11 +56,14 @@ class FusedLocationDataSource(
             locationCallback!!,
             context.mainLooper
         ).await()
+        Timber.tag("Location").i("Location updates started successfully")
     }
 
     override suspend fun stopTracking() {
+        Timber.tag("Location").i("stopTracking - Removing location updates")
         locationCallback?.let {
             fusedLocationClient.removeLocationUpdates(it)
+            Timber.tag("Location").d("Location callback removed")
         }
         locationCallback = null
     }

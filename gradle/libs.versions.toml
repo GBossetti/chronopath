@@ -18,6 +18,7 @@ play-services-location = "21.0.1"
 work-runtime = "2.9.0"
 startup-runtime = "1.1.1"
 mockk = "1.13.9"
+timber = "5.0.1"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -65,6 +66,9 @@ androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version
 
 # Startup
 androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startup-runtime" }
+
+# Logging
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 
 # Testing
 junit = { module = "junit:junit", version.ref = "junit" }

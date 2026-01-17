@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters
 import com.chronopath.locationtracker.core.common.Constants
 import com.chronopath.locationtracker.core.services.LocationTrackingService
 import kotlinx.coroutines.delay
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 
@@ -40,28 +41,34 @@ class TrackingHealthWorker (
     }
 
     override suspend fun doWork(): Result {
+        Timber.tag("Worker").i("TrackingHealthWorker - Starting health check")
         return try {
             // Check if tracking should be active (stored in SharedPreferences)
             val shouldBeActive = isTrackingSupposedToBeActive()
+            Timber.tag("Worker").d("Tracking should be active: $shouldBeActive")
 
             if (shouldBeActive) {
                 // Check if service is actually running
                 val isServiceRunning = isForegroundServiceRunning()
+                Timber.tag("Worker").d("Service currently running: $isServiceRunning")
 
                 if (!isServiceRunning) {
                     // Service died, need to restart it
+                    Timber.tag("Worker").w("Service not running but should be - attempting restart")
                     restartTrackingService()
                     // Wait a bit to ensure service starts
                     delay(2000)
 
                     // Verify restart succeeded
                     if (isForegroundServiceRunning()) {
+                        Timber.tag("Worker").i("Service restarted successfully")
                         Result.success(
                             Data.Builder()
                                 .putString("action", "service_restarted")
                                 .build()
                         )
                     } else {
+                        Timber.tag("Worker").e("Failed to restart service")
                         Result.failure(
                             Data.Builder()
                                 .putString("error", "failed_to_restart_service")
@@ -70,6 +77,7 @@ class TrackingHealthWorker (
                     }
                 } else {
                     // Service is running normally
+                    Timber.tag("Worker").i("Health check passed - service running normally")
                     Result.success(
                         Data.Builder()
                             .putString("action", "health_check_passed")
@@ -78,6 +86,7 @@ class TrackingHealthWorker (
                 }
             } else {
                 // Tracking should not be active, nothing to do
+                Timber.tag("Worker").d("Tracking not active - no action needed")
                 Result.success(
                     Data.Builder()
                         .putString("action", "no_action_needed")
@@ -85,6 +94,7 @@ class TrackingHealthWorker (
                 )
             }
         } catch (e: Exception) {
+            Timber.tag("Worker").e(e, "Health check failed with exception")
             Result.failure(
                 Data.Builder()
                     .putString("error", e.message ?: "unknown_error")

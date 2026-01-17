@@ -13,6 +13,20 @@ class AndroidBatteryDataSource(
     private val context: Context
 ) : BatteryDataSource {
 
+    override fun getCurrentBatteryPercentage(): Int {
+        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+        return if (level >= 0 && scale > 0) (level * 100 / scale.toFloat()).toInt() else -1
+    }
+
+    override fun getCurrentChargingState(): Boolean {
+        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val status = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        return status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL
+    }
+
     override val batteryPercentage: Flow<Int> = callbackFlow {
         val receiver = object : android.content.BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {

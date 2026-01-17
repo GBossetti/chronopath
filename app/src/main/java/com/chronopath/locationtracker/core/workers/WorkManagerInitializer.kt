@@ -5,6 +5,7 @@ import androidx.startup.Initializer
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import com.chronopath.locationtracker.core.di.AppModule
+import timber.log.Timber
 import java.util.concurrent.Executors
 
 /**
@@ -14,6 +15,8 @@ import java.util.concurrent.Executors
 class WorkManagerInitializer : Initializer<WorkManager> {
 
     override fun create(context: Context): WorkManager {
+        Timber.tag("Init").i("WorkManagerInitializer - Initializing WorkManager")
+
         // Initialize WorkManager with custom configuration
         val config = Configuration.Builder()
             .setExecutor(Executors.newFixedThreadPool(4))
@@ -21,10 +24,12 @@ class WorkManagerInitializer : Initializer<WorkManager> {
             .build()
 
         WorkManager.initialize(context, config)
+        Timber.tag("Init").d("WorkManager initialized with custom configuration")
 
         // Schedule initial workers
         scheduleInitialWorkers(context)
 
+        Timber.tag("Init").i("WorkManager initialization complete")
         return WorkManager.getInstance(context)
     }
 
@@ -33,6 +38,7 @@ class WorkManagerInitializer : Initializer<WorkManager> {
     }
 
     private fun scheduleInitialWorkers(context: Context) {
+        Timber.tag("Init").d("Scheduling initial workers")
         val workManager = WorkManager.getInstance(context)
 
         // Schedule health check worker (runs every 30 minutes)
@@ -42,9 +48,11 @@ class WorkManagerInitializer : Initializer<WorkManager> {
             androidx.work.ExistingPeriodicWorkPolicy.KEEP,
             healthRequest
         )
+        Timber.tag("Init").d("TrackingHealthWorker scheduled (30 min interval)")
 
         // Schedule one-time startup worker
         val startupRequest = AppStartupWorker.createWorkRequest()
         workManager.enqueue(startupRequest)
+        Timber.tag("Init").d("AppStartupWorker enqueued")
     }
 }

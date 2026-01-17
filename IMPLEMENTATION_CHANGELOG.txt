@@ -1,0 +1,262 @@
+================================================================================
+LOCATIONTRACKER - IMPLEMENTATION CHANGELOG
+================================================================================
+Date: 2026-01-17
+Status: COMPLETED
+
+================================================================================
+SUMMARY
+================================================================================
+Two major changes were implemented:
+1. BUG FIX: Fixed duplicate saves issue (~175x duplication per location)
+2. FEATURE: Added comprehensive Timber logging throughout the app
+
+================================================================================
+BUG FIX: DUPLICATE SAVES (CRITICAL)
+================================================================================
+
+PROBLEM
+-------
+Database analysis revealed:
+- Total rows: 11,068
+- Unique locations: 63
+- Duplication factor: ~175x per location
+
+ROOT CAUSE
+----------
+In DataAggregator.kt, the code used combine() which emits whenever ANY of its
+input flows emits:
+
+  combine(
+      locationDataSource.locationUpdates,  // Emits on GPS update
+      batteryDataSource.batteryPercentage, // Emits EVERY FEW SECONDS!
+      batteryDataSource.isCharging,        // Emits on battery broadcast
+      networkDataSource.networkType        // Emits once
+  )
+
+ACTION_BATTERY_CHANGED fires very frequently (every few seconds), so the same
+location was saved repeatedly every time battery status updated.
+
+SOLUTION
+--------
+Changed from combine() to map() on location flow only. Battery and network
+state are now read synchronously when a location arrives:
+
+  locationDataSource.locationUpdates.map { androidLocation ->
+      val batteryPercent = batteryDataSource.getCurrentBatteryPercentage()
+      val isCharging = batteryDataSource.getCurrentChargingState()
+      val networkType = networkDataSource.getCurrentNetworkType()
+      // Create Location object...
+  }
+
+FILES CHANGED FOR BUG FIX
+-------------------------
+1. data/source/aggregator/DataAggregator.kt
+   - Changed combine() to map()
+   - Now emits ONLY when location updates
+
+2. data/source/battery/BatteryDataSource.kt
+   - Added: fun getCurrentBatteryPercentage(): Int
+   - Added: fun getCurrentChargingState(): Boolean
+
+3. data/source/battery/impl/AndroidBatteryDataSource.kt
+   - Implemented direct battery reads using registerReceiver(null, filter)
+
+4. data/source/network/NetworkDataSource.kt
+   - Added: fun getCurrentNetworkType(): String
+
+5. data/source/network/impl/AndroidNetworkDataSource.kt
+   - Implemented direct network type read
+
+================================================================================
+FEATURE: TIMBER LOGGING
+================================================================================
+
+OVERVIEW
+--------
+Added comprehensive logging using Timber library to monitor:
+- Service lifecycle (start/stop/destroy)
+- Location saves to database
+- Worker execution (health checks, startup restoration)
+- App state (foreground/background transitions)
+- User actions (start/stop tracking)
+
+DEPENDENCY ADDED
+----------------
+File: gradle/libs.versions.toml
+  [versions]
+  timber = "5.0.1"
+
+  [libraries]
+  timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+
+File: app/build.gradle.kts
+  implementation(libs.timber)
+  buildConfig = true  // Required for BuildConfig.DEBUG check
+
+APPLICATION CLASS (NEW FILE)
+----------------------------
+File: LocationTrackerApplication.kt
+
+Initializes Timber on app startup (debug builds only):
+  if (BuildConfig.DEBUG) {
+      Timber.plant(Timber.DebugTree())
+  }
+
+COMPONENTS WITH LOGGING
+-----------------------
+
+1. LocationTrackingService.kt (TAG: "Service")
+   - onCreate: Service created
+   - onStartCommand: Action received
+   - startTracking: Service starting, location config
+   - Location received: lat, lon, accuracy
+   - stopTracking: Service stopping
+   - onDestroy: Service destroyed
+   - Errors: Now uses Timber.e() instead of e.printStackTrace()
+
+2. TrackingHealthWorker.kt (TAG: "Worker")
+   - doWork start: Health check starting
+   - State checks: shouldBeActive, isServiceRunning
+   - Service restart: Attempt and result
+   - Exceptions: Error details
+
+3. AppStartupWorker.kt (TAG: "Worker")
+   - doWork start: Startup check starting
+   - Restore check: wasTrackingActive
+   - Service restore: Restoring tracking
+   - Exceptions: Error details
+
+4. WorkManagerInitializer.kt (TAG: "Init")
+   - WorkManager initialization
+   - Worker scheduling
+
+5. FusedLocationDataSource.kt (TAG: "Location")
+   - startTracking: Config and start
+   - onLocationResult: Each location update
+   - stopTracking: Updates stopped
+
+6. LocationRepositoryImpl.kt (TAG: "DB")
+   - insertLocation: Coordinates and timestamp
+   - saveLocation: Success/failure
+   - getLocationCount: Current count
+
+7. MainViewModel.kt (TAG: "ViewModel")
+   - init: Initialized
+   - checkTrackingStatus: Current status
+   - startTracking: User action, result
+   - stopTracking: User action, result
+   - Location count updates
+
+8. MainActivity.kt (TAG: "Activity")
+   - onCreate: Activity created
+   - onResume: App in FOREGROUND
+   - onPause: App in BACKGROUND
+   - onDestroy: Activity destroyed
+
+LOG TAGS SUMMARY
+----------------
+Tag         | Component              | What it shows
+------------|------------------------|------------------------------------
+Service     | LocationTrackingService| Service lifecycle, tracking events
+Worker      | Health & Startup Workers| Background task execution
+Init        | WorkManagerInitializer | App startup initialization
+Location    | FusedLocationDataSource| Raw GPS updates from device
+DB          | LocationRepositoryImpl | Database save/read operations
+ViewModel   | MainViewModel          | UI state changes, user actions
+Activity    | MainActivity           | App foreground/background
+
+================================================================================
+HOW TO VIEW LOGS
+================================================================================
+
+Command Line (adb):
+-------------------
+# All custom logs
+adb logcat | grep -E "Service|Worker|Location|DB|ViewModel|Activity|Init"
+
+# Just service events
+adb logcat | grep "Service"
+
+# Just foreground/background (Activity lifecycle)
+adb logcat | grep "Activity"
+
+# Just GPS location updates
+adb logcat | grep "Location"
+
+# Just database operations
+adb logcat | grep "DB"
+
+# Just worker execution
+adb logcat | grep "Worker"
+
+Android Studio:
+---------------
+1. Open Logcat panel (View > Tool Windows > Logcat)
+2. In the filter field, type any tag: Service, Worker, Location, etc.
+3. Or use: tag:Service (for exact tag matching)
+
+================================================================================
+ALL FILES MODIFIED
+================================================================================
+
+Bug Fix Files:
+1. data/source/aggregator/DataAggregator.kt
+2. data/source/battery/BatteryDataSource.kt
+3. data/source/battery/impl/AndroidBatteryDataSource.kt
+4. data/source/network/NetworkDataSource.kt
+5. data/source/network/impl/AndroidNetworkDataSource.kt
+
+Logging Files:
+6. gradle/libs.versions.toml
+7. app/build.gradle.kts
+8. app/src/main/AndroidManifest.xml
+9. NEW: LocationTrackerApplication.kt
+10. core/services/LocationTrackingService.kt
+11. core/workers/TrackingHealthWorker.kt
+12. core/workers/AppStartupWorker.kt
+13. core/workers/WorkManagerInitializer.kt
+14. data/source/location/FusedLocationDataSource.kt
+15. data/repository/LocationRepositoryImpl.kt
+16. ui/MainViewModel.kt
+17. MainActivity.kt
+
+================================================================================
+VERIFICATION STEPS
+================================================================================
+
+1. Build: ./gradlew assembleDebug (PASSED)
+2. Install on device
+3. Verify bug fix:
+   - Uninstall/reinstall app
+   - Track for 10-15 minutes
+   - Pull database and verify no duplicates:
+     adb exec-out run-as com.chronopath.locationtracker cat databases/location_tracker.db > ~/db.db
+     sqlite3 ~/db.db "SELECT COUNT(*) FROM locations"
+     sqlite3 ~/db.db "SELECT COUNT(DISTINCT latitude || longitude || timestamp) FROM locations"
+   - Both counts should be EQUAL (no duplicates)
+
+4. Verify logging:
+   - View logs: adb logcat | grep -E "Service|Worker|Location|DB|ViewModel|Activity"
+   - Test scenarios:
+     * Start tracking -> see Service and Location logs
+     * Move to background -> see Activity onPause log
+     * Return to foreground -> see Activity onResume log
+     * Stop tracking -> see Service stop logs
+     * Kill app and reopen -> see Worker and startup logs
+
+================================================================================
+NOTES ON SERVICE GAPS
+================================================================================
+
+The data analysis also revealed that the service is being killed by Android
+battery optimization and not restarting properly. There were 10+ hour gaps
+with no data. The logging will help diagnose when/why the service stops.
+
+Possible future improvements:
+- Check battery optimization settings for the app
+- Consider more frequent health worker checks
+- Add wake locks or other mechanisms to keep service alive
+- Consider using WorkManager for location tracking instead of foreground service
+
+================================================================================

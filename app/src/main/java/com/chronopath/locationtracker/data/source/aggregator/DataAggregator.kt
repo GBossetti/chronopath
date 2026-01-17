@@ -5,7 +5,8 @@ import com.chronopath.locationtracker.data.source.id.DeviceIdManager
 import com.chronopath.locationtracker.data.source.location.LocationDataSource
 import com.chronopath.locationtracker.data.source.network.NetworkDataSource
 import com.chronopath.locationtracker.domain.model.Location
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 
 class DataAggregator(
@@ -14,13 +15,18 @@ class DataAggregator(
     private val networkDataSource: NetworkDataSource,
     private val deviceIdManager: DeviceIdManager
 ) {
+    /**
+     * Returns a Flow that emits only when a new location arrives.
+     * Battery and network state are read synchronously at that moment.
+     * This prevents duplicate saves caused by battery broadcast updates.
+     */
     fun getAggregatedLocations(): Flow<Location> {
-        return combine(
-            locationDataSource.locationUpdates,
-            batteryDataSource.batteryPercentage,
-            batteryDataSource.isCharging,
-            networkDataSource.networkType
-        ) { androidLocation, batteryPercent, isCharging, networkType ->
+        return locationDataSource.locationUpdates.map { androidLocation ->
+            // Read current battery/network state when location arrives
+            val batteryPercent = batteryDataSource.getCurrentBatteryPercentage()
+            val isCharging = batteryDataSource.getCurrentChargingState()
+            val networkType = networkDataSource.getCurrentNetworkType()
+
             Location(
                 latitude = androidLocation.latitude,
                 longitude = androidLocation.longitude,
