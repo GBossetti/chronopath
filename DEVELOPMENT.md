@@ -1,4 +1,4 @@
-# Architecture
+# Development Guide
 
 Project architecture and development guide for ChronoPath.
 
@@ -36,21 +36,27 @@ This is a **Clean Architecture** Android app with Jetpack Compose UI.
 ```
 domain/          Business logic layer (pure Kotlin, no Android dependencies)
 ├── model/       Domain entities (Location)
-├── repository/  Repository interfaces
+├── repository/  Repository interfaces (LocationRepository)
+├── controller/  Tracking controller interface (TrackingController)
 └── usecase/     Use case classes following UseCase<Input, Output> pattern
 
 data/            Data layer implementation
-├── local/       Room database (LocationDatabase, LocationDao, LocationEntity)
-├── repository/  Repository implementations
+├── local/       Room database (LocationDatabase, LocationDao, LocationEntity, InstantConverter)
+├── repository/  Repository implementations (LocationRepositoryImpl)
 ├── mapper/      Domain <-> Entity mappers
-└── source/      Data sources (location, battery, network, device ID)
+└── source/      Data sources (location, battery, network, device ID, aggregator)
 
 ui/              Presentation layer
+├── MainViewModel.kt   ViewModel managing tracking state and user actions
+├── screen/      Screen composables (MainScreen)
+├── components/  Reusable UI components (TrackingButton, PermissionHandler)
 └── theme/       Compose Material3 theming
 
 core/            Cross-cutting concerns
 ├── di/          AppModule (service locator pattern for DI)
 ├── common/      Constants, Result<T> sealed class
+├── controller/  TrackingController implementation (TrackingControllerImpl)
+├── services/    Foreground service (LocationTrackingService, NotificationHelper)
 └── workers/     WorkManager workers for background tasks
 ```
 
@@ -79,9 +85,13 @@ core/            Cross-cutting concerns
 ## Key Files
 
 - `MainActivity.kt`: Single Compose-based entry point
+- `LocationTrackerApplication.kt`: Application class for app-level initialization
+- `ui/MainViewModel.kt`: ViewModel managing tracking state and user actions
 - `core/di/AppModule.kt`: Manual dependency injection setup
-- `data/local/LocationDatabase.kt`: Room database singleton
+- `core/services/LocationTrackingService.kt`: Foreground service for continuous location tracking
+- `domain/controller/TrackingController.kt`: Interface for tracking control (Dependency Inversion)
 - `domain/repository/LocationRepository.kt`: Main data access interface
+- `data/local/LocationDatabase.kt`: Room database configuration
 - `data/source/aggregator/DataAggregator.kt`: Combines multi-source sensor data
 
 ## Tech Stack
