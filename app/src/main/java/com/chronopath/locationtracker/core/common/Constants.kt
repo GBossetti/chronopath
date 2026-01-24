@@ -18,7 +18,6 @@ object Constants {
     const val NOTIFICATION_ID = 1
 
     // Shared Preferences keys
-    const val PREFS_TRACKING_ACTIVE = "tracking_active"
     const val PREFS_FIRST_LAUNCH = "first_launch"
 
     // Export

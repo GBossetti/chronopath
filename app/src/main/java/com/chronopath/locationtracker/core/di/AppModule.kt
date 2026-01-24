@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.chronopath.locationtracker.core.controller.TrackingControllerImpl
 import com.chronopath.locationtracker.data.local.LocationDatabase
 import com.chronopath.locationtracker.data.repository.LocationRepositoryImpl
+import com.chronopath.locationtracker.data.settings.SettingsRepository
 import com.chronopath.locationtracker.data.source.aggregator.DataAggregator
 import com.chronopath.locationtracker.data.source.battery.impl.AndroidBatteryDataSource
 import com.chronopath.locationtracker.data.source.id.DeviceIdManager
@@ -56,7 +57,8 @@ object AppModule {
     fun provideTrackingController(context: Context): TrackingController {
         return trackingController ?: synchronized(this) {
             trackingController ?: TrackingControllerImpl(
-                context.applicationContext
+                context.applicationContext,
+                SettingsRepository(context.applicationContext)
             ).also { trackingController = it }
         }
     }

@@ -35,8 +35,6 @@ class LocationTrackingService : Service() {
         const val ACTION_START = "com.chronopath.locationtracker.ACTION_START"
         const val ACTION_STOP = "com.chronopath.locationtracker.ACTION_STOP"
 
-        private const val PREFS_KEY_IS_TRACKING = "is_tracking_active"
-
         /**
          * Starts the location tracking service.
          */
@@ -131,7 +129,9 @@ class LocationTrackingService : Service() {
         }
         Timber.tag("Service").d("Foreground notification displayed")
 
-        updateTrackingState(true)
+        serviceScope.launch {
+            settingsRepository.setIsTrackingActive(true)
+        }
 
         trackingJob?.cancel()
         trackingJob = serviceScope.launch {
@@ -167,27 +167,21 @@ class LocationTrackingService : Service() {
         serviceScope.launch {
             locationDataSource.stopTracking()
             Timber.tag("Service").d("Location updates stopped")
+            settingsRepository.setIsTrackingActive(false)
         }
 
-        updateTrackingState(false)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
         Timber.tag("Service").i("Service stopped")
-    }
-
-    private fun updateTrackingState(isActive: Boolean) {
-        getSharedPreferences(Constants.PREFS_TRACKING_ACTIVE, MODE_PRIVATE)
-            .edit()
-            .putBoolean(PREFS_KEY_IS_TRACKING, isActive)
-            .apply()
     }
 
     override fun onDestroy() {
         Timber.tag("Service").i("onDestroy - Service being destroyed")
         super.onDestroy()
         trackingJob?.cancel()
+        // Note: We don't set isTrackingActive to false here because the service being destroyed
+        // doesn't mean the user stopped tracking - it could be a system kill that needs recovery
         serviceScope.cancel()
-        updateTrackingState(false)
         Timber.tag("Service").d("Resources cleaned up")
     }
 

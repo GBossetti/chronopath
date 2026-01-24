@@ -30,7 +30,6 @@ class ConstantsTest {
 
     @Test
     fun `prefs keys are defined`() {
-        assertEquals("tracking_active", Constants.PREFS_TRACKING_ACTIVE)
         assertEquals("first_launch", Constants.PREFS_FIRST_LAUNCH)
     }
 

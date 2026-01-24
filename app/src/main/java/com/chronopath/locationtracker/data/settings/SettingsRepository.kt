@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -20,6 +21,7 @@ class SettingsRepository(private val context: Context) {
     companion object {
         private val KEY_TRACKING_INTERVAL_MS = longPreferencesKey("tracking_interval_ms")
         private val KEY_MIN_DISTANCE_METERS = floatPreferencesKey("min_distance_meters")
+        private val KEY_IS_TRACKING_ACTIVE = booleanPreferencesKey("is_tracking_active")
     }
 
     val trackingIntervalMs: Flow<Long> = context.dataStore.data.map { preferences ->
@@ -58,6 +60,20 @@ class SettingsRepository(private val context: Context) {
         if (!BuildConfig.HAS_SETTINGS_UI) return
         context.dataStore.edit { preferences ->
             preferences[KEY_MIN_DISTANCE_METERS] = distanceMeters
+        }
+    }
+
+    val isTrackingActive: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[KEY_IS_TRACKING_ACTIVE] ?: false
+    }
+
+    suspend fun getIsTrackingActive(): Boolean {
+        return context.dataStore.data.first()[KEY_IS_TRACKING_ACTIVE] ?: false
+    }
+
+    suspend fun setIsTrackingActive(isActive: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_IS_TRACKING_ACTIVE] = isActive
         }
     }
 }

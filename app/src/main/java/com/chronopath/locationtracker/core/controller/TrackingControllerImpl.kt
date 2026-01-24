@@ -1,9 +1,9 @@
 package com.chronopath.locationtracker.core.controller
 
 import android.content.Context
-import com.chronopath.locationtracker.core.common.Constants
 import com.chronopath.locationtracker.core.common.Result
 import com.chronopath.locationtracker.core.services.LocationTrackingService
+import com.chronopath.locationtracker.data.settings.SettingsRepository
 import com.chronopath.locationtracker.domain.controller.TrackingController
 
 /**
@@ -11,7 +11,8 @@ import com.chronopath.locationtracker.domain.controller.TrackingController
  * Lives in the core layer as it depends on Android Context.
  */
 class TrackingControllerImpl(
-    private val context: Context
+    private val context: Context,
+    private val settingsRepository: SettingsRepository
 ) : TrackingController {
 
     override suspend fun startTracking(): Result<Boolean> {
@@ -40,11 +41,7 @@ class TrackingControllerImpl(
      * Checks if tracking was active before the app was closed.
      * Used by workers to restore tracking state.
      */
-    fun wasTrackingActiveBeforeExit(): Boolean {
-        val prefs = context.getSharedPreferences(
-            Constants.PREFS_TRACKING_ACTIVE,
-            Context.MODE_PRIVATE
-        )
-        return prefs.getBoolean("is_tracking_active", false)
+    suspend fun wasTrackingActiveBeforeExit(): Boolean {
+        return settingsRepository.getIsTrackingActive()
     }
 }

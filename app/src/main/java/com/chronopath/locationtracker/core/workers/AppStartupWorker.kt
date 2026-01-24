@@ -6,8 +6,8 @@ import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkerParameters
-import com.chronopath.locationtracker.core.common.Constants
 import com.chronopath.locationtracker.core.services.LocationTrackingService
+import com.chronopath.locationtracker.data.settings.SettingsRepository
 import timber.log.Timber
 
 
@@ -65,12 +65,9 @@ class AppStartupWorker (
         }
     }
 
-    private fun wasTrackingActiveBeforeExit(): Boolean {
-        val prefs = applicationContext.getSharedPreferences(
-            Constants.PREFS_TRACKING_ACTIVE,
-            Context.MODE_PRIVATE
-        )
-        return prefs.getBoolean("is_tracking_active", false)
+    private suspend fun wasTrackingActiveBeforeExit(): Boolean {
+        val settingsRepository = SettingsRepository(applicationContext)
+        return settingsRepository.getIsTrackingActive()
     }
 
     private fun restartTrackingService() {

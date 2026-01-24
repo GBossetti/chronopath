@@ -6,8 +6,8 @@ import androidx.work.Data
 import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
-import com.chronopath.locationtracker.core.common.Constants
 import com.chronopath.locationtracker.core.services.LocationTrackingService
+import com.chronopath.locationtracker.data.settings.SettingsRepository
 import kotlinx.coroutines.delay
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
@@ -104,12 +104,8 @@ class TrackingHealthWorker (
     }
 
     private suspend fun isTrackingSupposedToBeActive(): Boolean {
-        // Read from SharedPreferences
-        val prefs = applicationContext.getSharedPreferences(
-            Constants.PREFS_TRACKING_ACTIVE,
-            Context.MODE_PRIVATE
-        )
-        return prefs.getBoolean("is_tracking_active", false)
+        val settingsRepository = SettingsRepository(applicationContext)
+        return settingsRepository.getIsTrackingActive()
     }
 
     private fun isForegroundServiceRunning(): Boolean {
