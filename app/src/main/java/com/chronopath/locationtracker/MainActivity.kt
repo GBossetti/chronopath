@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
             LocationTrackerTheme {
                 var showSettings by remember { mutableStateOf(false) }
 
-                if (showSettings && BuildConfig.HAS_SETTINGS_UI) {
+                if (showSettings) {
                     SettingsScreen(
                         onNavigateBack = { showSettings = false }
                     )

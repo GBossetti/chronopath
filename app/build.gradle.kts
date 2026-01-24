@@ -12,32 +12,12 @@ android {
         applicationId = "com.chronopath.locationtracker"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
-        }
-    }
-
-    flavorDimensions += "version"
-    productFlavors {
-        create("full") {
-            dimension = "version"
-            applicationIdSuffix = ""
-            versionNameSuffix = ""
-            buildConfigField("boolean", "HAS_SETTINGS_UI", "true")
-            buildConfigField("long", "FIXED_TRACKING_INTERVAL_MS", "0L")
-            resValue("string", "app_name", "ChronoPath")
-        }
-        create("lite") {
-            dimension = "version"
-            applicationIdSuffix = ".lite"
-            versionNameSuffix = "-lite"
-            buildConfigField("boolean", "HAS_SETTINGS_UI", "false")
-            buildConfigField("long", "FIXED_TRACKING_INTERVAL_MS", "${20 * 60 * 1000}L")
-            resValue("string", "app_name", "ChronoPath Lite")
         }
     }
 
@@ -77,8 +57,7 @@ android {
             val versionName = variant.versionName
             val versionCode = variant.versionCode
             val buildType = variant.buildType.name
-            val flavorName = variant.flavorName
-            output.outputFileName = "ChronoPath_${flavorName}_v${versionName}_(Build${versionCode})_${buildType}.apk"
+            output.outputFileName = "ChronoPath_v${versionName}_(Build${versionCode})_${buildType}.apk"
         }
     }
 }

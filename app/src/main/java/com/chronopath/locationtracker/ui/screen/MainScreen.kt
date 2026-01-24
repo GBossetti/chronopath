@@ -21,7 +21,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import com.chronopath.locationtracker.BuildConfig
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -81,13 +80,11 @@ fun MainScreen(
                     )
                 },
                 actions = {
-                    if (BuildConfig.HAS_SETTINGS_UI) {
-                        IconButton(onClick = onNavigateToSettings) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Settings"
-                            )
-                        }
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
