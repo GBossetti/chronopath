@@ -17,6 +17,7 @@ kotlinx-datetime = "0.5.0"
 play-services-location = "21.0.1"
 work-runtime = "2.9.0"
 startup-runtime = "1.1.1"
+datastore-preferences = "1.0.0"
 mockk = "1.13.9"
 timber = "5.0.1"
 
@@ -66,6 +67,9 @@ androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version
 
 # Startup
 androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startup-runtime" }
+
+# DataStore
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore-preferences" }
 
 # Logging
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }

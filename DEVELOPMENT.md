@@ -5,14 +5,23 @@ Project architecture and development guide for ChronoPath.
 ## Build Commands
 
 ```bash
-# Build the project
-./gradlew build
+# Build both flavors (full + lite)
+./gradlew assembleDebug
+
+# Build only full version (with settings UI)
+./gradlew assembleFullDebug
+
+# Build only lite version (fixed 20-min interval)
+./gradlew assembleLiteDebug
+
+# Install full version to connected device
+./gradlew installFullDebug
+
+# Install lite version to connected device
+./gradlew installLiteDebug
 
 # Clean build
 ./gradlew clean build
-
-# Install debug APK to connected device
-./gradlew installDebug
 
 # Run unit tests
 ./gradlew test
@@ -22,10 +31,58 @@ Project architecture and development guide for ChronoPath.
 
 # Run instrumented tests (requires connected device/emulator)
 ./gradlew connectedAndroidTest
-
-# Generate APK without installing
-./gradlew assembleDebug
 ```
+
+## Product Flavors
+
+The app has two product flavors for different use cases:
+
+| Flavor | Package Name | App Name | Description |
+|--------|--------------|----------|-------------|
+| **full** | `com.chronopath.locationtracker` | ChronoPath | Configurable interval via Settings UI |
+| **lite** | `com.chronopath.locationtracker.lite` | ChronoPath Lite | Fixed 20-minute interval, minimal battery |
+
+### Full Version
+- Settings screen accessible from top bar
+- User can choose tracking interval: 1, 3, 5, 10, or 20 minutes
+- Settings persisted via DataStore
+- Best for: activity tracking, detailed route recording
+
+### Lite Version
+- No settings UI, fixed 20-minute interval
+- Minimal battery usage (~2-5% per day)
+- Best for: simple "where was I" diary tracking
+
+Both versions use separate databases (different package names = isolated storage).
+
+## Tracking Configuration
+
+### Interval vs Battery Trade-off
+
+| Interval | GPS Wakeups/Hour | Estimated Daily Drain | Use Case |
+|----------|------------------|----------------------|----------|
+| 1 min | 60 | ~50-80% | Activity classification (walk/bike/car) |
+| 3 min | 20 | ~16-32% | Detailed tracking, vacation diary |
+| 5 min | 12 | ~8-24% | Balanced |
+| 10 min | 6 | ~5-12% | Battery saver |
+| 20 min | 3 | ~2-5% | Minimal, "where was I" only |
+
+### Data Collected Per Location
+
+Core (from GPS):
+- `latitude`, `longitude`, `timestamp`
+- `accuracy`, `altitude`, `speed`, `bearing`, `provider`
+
+Context (minimal battery cost):
+- `batteryPercentage`, `isCharging`
+- `networkType` (WIFI/MOBILE/OFFLINE)
+- `installationId`
+
+### Configuration Files
+
+- `core/common/Constants.kt`: Default values for interval and distance
+- `data/settings/SettingsRepository.kt`: DataStore-based settings persistence
+- `build.gradle.kts`: Flavor-specific BuildConfig values
 
 ## Architecture
 
@@ -44,11 +101,13 @@ data/            Data layer implementation
 ├── local/       Room database (LocationDatabase, LocationDao, LocationEntity, InstantConverter)
 ├── repository/  Repository implementations (LocationRepositoryImpl)
 ├── mapper/      Domain <-> Entity mappers
+├── settings/    User preferences (SettingsRepository with DataStore)
 └── source/      Data sources (location, battery, network, device ID, aggregator)
 
 ui/              Presentation layer
 ├── MainViewModel.kt   ViewModel managing tracking state and user actions
 ├── screen/      Screen composables (MainScreen)
+├── settings/    Settings screen (SettingsScreen, SettingsViewModel) - full flavor only
 ├── components/  Reusable UI components (TrackingButton, PermissionHandler)
 └── theme/       Compose Material3 theming
 

@@ -21,6 +21,26 @@ android {
         }
     }
 
+    flavorDimensions += "version"
+    productFlavors {
+        create("full") {
+            dimension = "version"
+            applicationIdSuffix = ""
+            versionNameSuffix = ""
+            buildConfigField("boolean", "HAS_SETTINGS_UI", "true")
+            buildConfigField("long", "FIXED_TRACKING_INTERVAL_MS", "0L")
+            resValue("string", "app_name", "ChronoPath")
+        }
+        create("lite") {
+            dimension = "version"
+            applicationIdSuffix = ".lite"
+            versionNameSuffix = "-lite"
+            buildConfigField("boolean", "HAS_SETTINGS_UI", "false")
+            buildConfigField("long", "FIXED_TRACKING_INTERVAL_MS", "${20 * 60 * 1000}L")
+            resValue("string", "app_name", "ChronoPath Lite")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -57,7 +77,8 @@ android {
             val versionName = variant.versionName
             val versionCode = variant.versionCode
             val buildType = variant.buildType.name
-            output.outputFileName = "LocationTracker_v${versionName}_(Build${versionCode})_${buildType}.apk"
+            val flavorName = variant.flavorName
+            output.outputFileName = "ChronoPath_${flavorName}_v${versionName}_(Build${versionCode})_${buildType}.apk"
         }
     }
 }
@@ -97,6 +118,9 @@ dependencies {
 
     // Startup
     implementation(libs.androidx.startup.runtime)
+
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
 
     // Logging
     implementation(libs.timber)

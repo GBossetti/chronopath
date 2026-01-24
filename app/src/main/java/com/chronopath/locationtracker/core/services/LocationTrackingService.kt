@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.IBinder
 import com.chronopath.locationtracker.core.common.Constants
 import com.chronopath.locationtracker.core.di.AppModule
+import com.chronopath.locationtracker.data.settings.SettingsRepository
 import com.chronopath.locationtracker.data.source.aggregator.DataAggregator
 import com.chronopath.locationtracker.data.source.battery.impl.AndroidBatteryDataSource
 import com.chronopath.locationtracker.data.source.id.DeviceIdManager
@@ -81,6 +82,7 @@ class LocationTrackingService : Service() {
     private lateinit var locationDataSource: FusedLocationDataSource
     private lateinit var dataAggregator: DataAggregator
     private lateinit var repository: LocationRepository
+    private lateinit var settingsRepository: SettingsRepository
 
     override fun onCreate() {
         super.onCreate()
@@ -102,6 +104,7 @@ class LocationTrackingService : Service() {
         )
 
         repository = AppModule.provideLocationRepository(applicationContext)
+        settingsRepository = SettingsRepository(applicationContext)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -132,11 +135,13 @@ class LocationTrackingService : Service() {
 
         trackingJob?.cancel()
         trackingJob = serviceScope.launch {
-            Timber.tag("Service").d("Starting location updates - interval: ${Constants.DEFAULT_TRACKING_INTERVAL_MS}ms, minDistance: ${Constants.DEFAULT_MIN_DISTANCE_METERS}m")
+            val intervalMs = settingsRepository.getTrackingIntervalMs()
+            val minDistanceMeters = settingsRepository.getMinDistanceMeters()
+            Timber.tag("Service").d("Starting location updates - interval: ${intervalMs}ms, minDistance: ${minDistanceMeters}m")
             // Start location updates
             locationDataSource.startTracking(
-                intervalMillis = Constants.DEFAULT_TRACKING_INTERVAL_MS,
-                minDistanceMeters = Constants.DEFAULT_MIN_DISTANCE_METERS
+                intervalMillis = intervalMs,
+                minDistanceMeters = minDistanceMeters
             )
 
             // Collect and save aggregated locations
