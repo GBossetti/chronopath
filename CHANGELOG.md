@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-24
+
+### Added
+- **Build flavors**: Two product variants from single codebase
+  - `full`: Configurable tracking interval with Settings UI
+  - `lite`: Fixed 20-minute interval, minimal battery (~2-5%/day)
+- **Settings screen** (full flavor): Choose interval from 1, 3, 5, 10, or 20 minutes
+- **SettingsRepository**: DataStore-based persistence for user preferences
+- **Battery estimates**: Settings UI shows expected battery consumption per option
+- Unit tests for SettingsViewModel and Constants
+
+### Changed
+- LocationTrackingService reads interval from SettingsRepository
+- APK naming includes flavor: `ChronoPath_{flavor}_v{version}_{build}.apk`
+- Updated DEVELOPMENT.md with flavor documentation and build commands
+
+### Technical
+- Added DataStore dependency for preferences
+- Each flavor has separate package name and isolated database
+- BuildConfig flags: `HAS_SETTINGS_UI`, `FIXED_TRACKING_INTERVAL_MS`
+
 ## [1.0.0] - 2026-01-17
 
 ### Added
