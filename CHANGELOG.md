@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-01-25
+
+### Changed
+- **Simplified to single app variant** - Removed lite flavor, now single configurable app
+- Removed unused dependencies: appcompat, lifecycle-livedata-ktx, compose-ui-tooling-preview, espresso-core
+- Consolidated duplicate code in workers via new `WorkerUtils` class
+- Extracted `isChargingStatus()` helper in `AndroidBatteryDataSource`
+
+### Added
+- Unit tests for `MainViewModel` (12 tests)
+- Unit tests for `TrackingControllerImpl` (8 tests)
+- Expanded `SettingsViewModelTest` with ViewModel behavior tests (10 new tests)
+
+### Technical
+- Smaller APK size due to removed dependencies
+- Better test coverage for critical components
+- Cleaner worker code with shared utilities
+
 ## [1.1.0] - 2026-01-24
 
 ### Added
