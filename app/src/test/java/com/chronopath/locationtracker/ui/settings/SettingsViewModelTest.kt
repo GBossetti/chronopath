@@ -1,9 +1,54 @@
 package com.chronopath.locationtracker.ui.settings
 
+import android.app.Application
+import com.chronopath.locationtracker.data.settings.SettingsRepository
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.unmockkConstructor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var application: Application
+    private lateinit var viewModel: SettingsViewModel
+
+    @Before
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+        application = mockk(relaxed = true)
+        mockkConstructor(SettingsRepository::class)
+        every { anyConstructed<SettingsRepository>().trackingIntervalMs } returns flowOf(5 * 60 * 1000L)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+        unmockkConstructor(SettingsRepository::class)
+    }
+
+    private fun createViewModel(): SettingsViewModel {
+        return SettingsViewModel(application)
+    }
+
+    // TrackingIntervalOption tests
 
     @Test
     fun `TrackingIntervalOption has correct 1 minute interval`() {
@@ -78,5 +123,114 @@ class SettingsViewModelTest {
 
         assertEquals(180_000L, expectedMs)
         assertEquals(minutes.toLong(), expectedMs / 60_000)
+    }
+
+    // SettingsViewModel tests
+
+    @Test
+    fun `initial selectedIntervalMs is default 5 minutes`() = runTest {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(5 * 60 * 1000L, viewModel.selectedIntervalMs.value)
+    }
+
+    @Test
+    fun `loadCurrentSettings updates selectedIntervalMs from repository`() = runTest {
+        val storedInterval = 10 * 60 * 1000L
+        every { anyConstructed<SettingsRepository>().trackingIntervalMs } returns flowOf(storedInterval)
+
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(storedInterval, viewModel.selectedIntervalMs.value)
+    }
+
+    @Test
+    fun `selectInterval updates selectedIntervalMs`() = runTest {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val newInterval = 20 * 60 * 1000L
+        viewModel.selectInterval(newInterval)
+
+        assertEquals(newInterval, viewModel.selectedIntervalMs.value)
+    }
+
+    @Test
+    fun `saveSettings calls repository with selected interval`() = runTest {
+        coEvery { anyConstructed<SettingsRepository>().setTrackingIntervalMs(any()) } returns Unit
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val newInterval = 3 * 60 * 1000L
+        viewModel.selectInterval(newInterval)
+        viewModel.saveSettings()
+        advanceUntilIdle()
+
+        coVerify { anyConstructed<SettingsRepository>().setTrackingIntervalMs(newInterval) }
+    }
+
+    @Test
+    fun `saveSettings sets saveSuccess true on success`() = runTest {
+        coEvery { anyConstructed<SettingsRepository>().setTrackingIntervalMs(any()) } returns Unit
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.saveSettings()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.saveSuccess.value)
+    }
+
+    @Test
+    fun `saveSettings sets isSaving false after completion`() = runTest {
+        coEvery { anyConstructed<SettingsRepository>().setTrackingIntervalMs(any()) } returns Unit
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.saveSettings()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isSaving.value)
+    }
+
+    @Test
+    fun `clearSaveSuccess sets saveSuccess to false`() = runTest {
+        coEvery { anyConstructed<SettingsRepository>().setTrackingIntervalMs(any()) } returns Unit
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.saveSettings()
+        advanceUntilIdle()
+        assertTrue(viewModel.saveSuccess.value)
+
+        viewModel.clearSaveSuccess()
+
+        assertFalse(viewModel.saveSuccess.value)
+    }
+
+    @Test
+    fun `intervalOptions contains 5 options`() = runTest {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(5, viewModel.intervalOptions.size)
+    }
+
+    @Test
+    fun `intervalOptions has 1 minute as first option`() = runTest {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(60_000L, viewModel.intervalOptions.first().intervalMs)
+    }
+
+    @Test
+    fun `intervalOptions has 20 minutes as last option`() = runTest {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(1_200_000L, viewModel.intervalOptions.last().intervalMs)
     }
 }
