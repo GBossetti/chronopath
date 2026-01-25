@@ -49,8 +49,7 @@ object AppModule {
 
         return LocationRepositoryImpl(
             database = db,
-            aggregator = aggregator,
-            deviceIdManager = deviceIdManager
+            aggregator = aggregator
         )
     }
 

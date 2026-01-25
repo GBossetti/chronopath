@@ -5,7 +5,6 @@ import com.chronopath.locationtracker.data.local.LocationDatabase
 import com.chronopath.locationtracker.data.local.dao.LocationDao
 import com.chronopath.locationtracker.data.local.entity.LocationEntity
 import com.chronopath.locationtracker.data.source.aggregator.DataAggregator
-import com.chronopath.locationtracker.data.source.id.DeviceIdManager
 import com.chronopath.locationtracker.domain.model.Location
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -26,7 +25,6 @@ class LocationRepositoryImplTest {
     private lateinit var database: LocationDatabase
     private lateinit var locationDao: LocationDao
     private lateinit var aggregator: DataAggregator
-    private lateinit var deviceIdManager: DeviceIdManager
 
     private val testInstant = Instant.parse("2024-01-15T10:30:00Z")
     private val testInstallationId = "test-installation-id"
@@ -38,12 +36,10 @@ class LocationRepositoryImplTest {
             every { locationDao() } returns locationDao
         }
         aggregator = mockk()
-        deviceIdManager = mockk()
 
         repository = LocationRepositoryImpl(
             database = database,
-            aggregator = aggregator,
-            deviceIdManager = deviceIdManager
+            aggregator = aggregator
         )
     }
 

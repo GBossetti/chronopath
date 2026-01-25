@@ -4,17 +4,17 @@ import com.chronopath.locationtracker.core.common.Result
 import com.chronopath.locationtracker.data.local.LocationDatabase
 import com.chronopath.locationtracker.data.mapper.LocationMapper
 import com.chronopath.locationtracker.data.source.aggregator.DataAggregator
-import com.chronopath.locationtracker.data.source.id.DeviceIdManager
 import com.chronopath.locationtracker.domain.model.Location
 import com.chronopath.locationtracker.domain.repository.LocationRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 
 class LocationRepositoryImpl(
     private val database: LocationDatabase,
-    private val aggregator: DataAggregator,
-    private val deviceIdManager: DeviceIdManager
+    private val aggregator: DataAggregator
 ) : LocationRepository {
 
     private val locationDao = database.locationDao()
@@ -48,10 +48,13 @@ class LocationRepositoryImpl(
     }
 
     override fun getLocationCount(): Flow<Int> {
-        return kotlinx.coroutines.flow.flow {
+        return flow {
             val count = locationDao.getLocationCount()
             Timber.tag("DB").d("getLocationCount - Total locations: $count")
             emit(count)
+        }.catch { e ->
+            Timber.tag("DB").e(e, "getLocationCount - Failed to get location count")
+            emit(0)
         }
     }
 }

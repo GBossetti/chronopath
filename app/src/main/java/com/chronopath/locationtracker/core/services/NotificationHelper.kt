@@ -17,6 +17,8 @@ import com.chronopath.locationtracker.core.common.Constants
  */
 object NotificationHelper {
 
+    private const val PENDING_INTENT_FLAGS = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+
     /**
      * Creates the notification channel for Android 8.0+.
      * Must be called before showing any notifications.
@@ -49,7 +51,7 @@ object NotificationHelper {
             context,
             0,
             contentIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PENDING_INTENT_FLAGS
         )
 
         // Intent to stop tracking
@@ -60,7 +62,7 @@ object NotificationHelper {
             context,
             1,
             stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PENDING_INTENT_FLAGS
         )
 
         return NotificationCompat.Builder(context, Constants.NOTIFICATION_CHANNEL_ID)

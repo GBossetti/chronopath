@@ -2,12 +2,9 @@ package com.chronopath.locationtracker.core.workers
 
 import android.content.Context
 import androidx.work.CoroutineWorker
-import androidx.work.Data
 import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
-import com.chronopath.locationtracker.core.services.LocationTrackingService
-import com.chronopath.locationtracker.data.settings.SettingsRepository
 import kotlinx.coroutines.delay
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
@@ -43,76 +40,43 @@ class TrackingHealthWorker (
     override suspend fun doWork(): Result {
         Timber.tag("Worker").i("TrackingHealthWorker - Starting health check")
         return try {
-            // Check if tracking should be active (stored in SharedPreferences)
-            val shouldBeActive = isTrackingSupposedToBeActive()
+            // Check if tracking should be active (stored in DataStore)
+            val shouldBeActive = WorkerUtils.isTrackingActive(applicationContext)
             Timber.tag("Worker").d("Tracking should be active: $shouldBeActive")
 
             if (shouldBeActive) {
                 // Check if service is actually running
-                val isServiceRunning = isForegroundServiceRunning()
+                val isServiceRunning = WorkerUtils.isServiceRunning(applicationContext)
                 Timber.tag("Worker").d("Service currently running: $isServiceRunning")
 
                 if (!isServiceRunning) {
                     // Service died, need to restart it
                     Timber.tag("Worker").w("Service not running but should be - attempting restart")
-                    restartTrackingService()
+                    WorkerUtils.startTrackingService(applicationContext)
                     // Wait a bit to ensure service starts
                     delay(2000)
 
                     // Verify restart succeeded
-                    if (isForegroundServiceRunning()) {
+                    if (WorkerUtils.isServiceRunning(applicationContext)) {
                         Timber.tag("Worker").i("Service restarted successfully")
-                        Result.success(
-                            Data.Builder()
-                                .putString("action", "service_restarted")
-                                .build()
-                        )
+                        Result.success(WorkerUtils.actionData("service_restarted"))
                     } else {
                         Timber.tag("Worker").e("Failed to restart service")
-                        Result.failure(
-                            Data.Builder()
-                                .putString("error", "failed_to_restart_service")
-                                .build()
-                        )
+                        Result.failure(WorkerUtils.errorData("failed_to_restart_service"))
                     }
                 } else {
                     // Service is running normally
                     Timber.tag("Worker").i("Health check passed - service running normally")
-                    Result.success(
-                        Data.Builder()
-                            .putString("action", "health_check_passed")
-                            .build()
-                    )
+                    Result.success(WorkerUtils.actionData("health_check_passed"))
                 }
             } else {
                 // Tracking should not be active, nothing to do
                 Timber.tag("Worker").d("Tracking not active - no action needed")
-                Result.success(
-                    Data.Builder()
-                        .putString("action", "no_action_needed")
-                        .build()
-                )
+                Result.success(WorkerUtils.actionData("no_action_needed"))
             }
         } catch (e: Exception) {
             Timber.tag("Worker").e(e, "Health check failed with exception")
-            Result.failure(
-                Data.Builder()
-                    .putString("error", e.message ?: "unknown_error")
-                    .build()
-            )
+            Result.failure(WorkerUtils.errorData(e.message ?: "unknown_error"))
         }
-    }
-
-    private suspend fun isTrackingSupposedToBeActive(): Boolean {
-        val settingsRepository = SettingsRepository(applicationContext)
-        return settingsRepository.getIsTrackingActive()
-    }
-
-    private fun isForegroundServiceRunning(): Boolean {
-        return LocationTrackingService.isRunning(applicationContext)
-    }
-
-    private fun restartTrackingService() {
-        LocationTrackingService.start(applicationContext)
     }
 }

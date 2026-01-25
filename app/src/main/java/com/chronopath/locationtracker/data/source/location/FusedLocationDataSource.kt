@@ -51,11 +51,13 @@ class FusedLocationDataSource(
             }
         }
 
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback!!,
-            context.mainLooper
-        ).await()
+        locationCallback?.let { callback ->
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                callback,
+                context.mainLooper
+            ).await()
+        }
         Timber.tag("Location").i("Location updates started successfully")
     }
 

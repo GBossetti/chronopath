@@ -1,6 +1,5 @@
 package com.chronopath.locationtracker.core.services
 
-import android.app.ActivityManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -22,7 +21,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 /**
@@ -61,16 +62,12 @@ class LocationTrackingService : Service() {
 
         /**
          * Checks if the service is currently running.
+         * Uses the tracking state from DataStore instead of deprecated getRunningServices() API.
          */
         fun isRunning(context: Context): Boolean {
-            val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-            @Suppress("DEPRECATION")
-            for (service in manager.getRunningServices(Int.MAX_VALUE)) {
-                if (LocationTrackingService::class.java.name == service.service.className) {
-                    return true
-                }
+            return runBlocking {
+                SettingsRepository(context).isTrackingActive.first()
             }
-            return false
         }
     }
 
