@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-01-26
+
+### Fixed
+- **Location count now updates in real-time** - Changed `getLocationCount()` from one-shot suspend function to reactive `Flow<Int>`
+- **Reduced minimum distance threshold** - From 100m to 50m for better tracking sensitivity
+
+### Removed
+- Detekt static analysis (unnecessary for personal project)
+
+### Added
+- Turbine library for Flow testing
+
 ## [1.2.0] - 2026-01-25
 
 ### Changed
