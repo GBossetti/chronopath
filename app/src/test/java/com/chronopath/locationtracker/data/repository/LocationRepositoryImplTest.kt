@@ -6,10 +6,12 @@ import com.chronopath.locationtracker.data.local.dao.LocationDao
 import com.chronopath.locationtracker.data.local.entity.LocationEntity
 import com.chronopath.locationtracker.data.source.aggregator.DataAggregator
 import com.chronopath.locationtracker.domain.model.Location
+import app.cash.turbine.test
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -151,7 +153,7 @@ class LocationRepositoryImplTest {
 
     @Test
     fun `getLocationCount returns count from dao`() = runTest {
-        coEvery { locationDao.getLocationCount() } returns 42
+        every { locationDao.getLocationCount() } returns flowOf(42)
 
         val result = repository.getLocationCount().first()
 
@@ -160,10 +162,35 @@ class LocationRepositoryImplTest {
 
     @Test
     fun `getLocationCount returns zero when empty`() = runTest {
-        coEvery { locationDao.getLocationCount() } returns 0
+        every { locationDao.getLocationCount() } returns flowOf(0)
 
         val result = repository.getLocationCount().first()
 
         assertEquals(0, result)
+    }
+
+    /**
+     * This test verifies the FIXED behavior:
+     * - DAO returns Flow<Int> that emits continuously
+     * - Repository delegates directly to DAO's flow
+     * - Multiple emissions are passed through to observers
+     */
+    @Test
+    fun `getLocationCount emits multiple updates from dao flow`() = runTest {
+        val countFlow = MutableSharedFlow<Int>()
+        every { locationDao.getLocationCount() } returns countFlow
+
+        repository.getLocationCount().test {
+            countFlow.emit(0)
+            assertEquals(0, awaitItem())
+
+            countFlow.emit(1)
+            assertEquals(1, awaitItem())
+
+            countFlow.emit(5)
+            assertEquals(5, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }

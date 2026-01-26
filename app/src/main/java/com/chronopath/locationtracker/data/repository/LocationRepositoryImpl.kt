@@ -8,7 +8,6 @@ import com.chronopath.locationtracker.domain.model.Location
 import com.chronopath.locationtracker.domain.repository.LocationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 
@@ -48,13 +47,14 @@ class LocationRepositoryImpl(
     }
 
     override fun getLocationCount(): Flow<Int> {
-        return flow {
-            val count = locationDao.getLocationCount()
-            Timber.tag("DB").d("getLocationCount - Total locations: $count")
-            emit(count)
-        }.catch { e ->
-            Timber.tag("DB").e(e, "getLocationCount - Failed to get location count")
-            emit(0)
-        }
+        return locationDao.getLocationCount()
+            .map { count ->
+                Timber.tag("DB").d("getLocationCount - Total locations: $count")
+                count
+            }
+            .catch { e ->
+                Timber.tag("DB").e(e, "getLocationCount - Failed to get location count")
+                emit(0)
+            }
     }
 }

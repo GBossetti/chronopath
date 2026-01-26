@@ -14,8 +14,8 @@ class ConstantsTest {
     }
 
     @Test
-    fun `default min distance is 100 meters`() {
-        assertEquals(100f, Constants.DEFAULT_MIN_DISTANCE_METERS)
+    fun `default min distance is 50 meters`() {
+        assertEquals(50f, Constants.DEFAULT_MIN_DISTANCE_METERS)
     }
 
     @Test

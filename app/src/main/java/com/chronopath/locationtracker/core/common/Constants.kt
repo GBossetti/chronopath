@@ -6,7 +6,7 @@ package com.chronopath.locationtracker.core.common
 object Constants {
     // Location tracking defaults
     const val DEFAULT_TRACKING_INTERVAL_MS = 5 * 60 * 1000L // 5 minutes
-    const val DEFAULT_MIN_DISTANCE_METERS = 100f // 100 meters
+    const val DEFAULT_MIN_DISTANCE_METERS = 50f // 50 meters
 
     // Request codes
     const val LOCATION_PERMISSION_REQUEST_CODE = 1001

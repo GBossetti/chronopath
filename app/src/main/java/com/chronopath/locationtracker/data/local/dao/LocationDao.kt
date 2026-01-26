@@ -17,7 +17,7 @@ interface LocationDao {
     fun getAllLocations(): Flow<List<LocationEntity>>
     
     @Query("SELECT COUNT(*) FROM locations")
-    suspend fun getLocationCount(): Int
+    fun getLocationCount(): Flow<Int>
     
     @Query("DELETE FROM locations")
     suspend fun deleteAllLocations()
