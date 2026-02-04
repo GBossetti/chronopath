@@ -43,8 +43,8 @@ class FusedLocationDataSource(
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let { location ->
-                    Timber.tag("Location").d("Location update - lat: %.6f, lon: %.6f, accuracy: %.1fm, provider: %s".format(
-                        location.latitude, location.longitude, location.accuracy, location.provider
+                    Timber.tag("Location").d("Location update received, accuracy: %.1fm, provider: %s".format(
+                        location.accuracy, location.provider
                     ))
                     _locationFlow.value = location
                 }

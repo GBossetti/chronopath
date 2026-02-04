@@ -12,8 +12,8 @@ android {
         applicationId = "com.chronopath.locationtracker"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.2.1"
+        versionCode = 5
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -23,7 +23,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -108,6 +109,13 @@ dependencies {
 
     // Logging
     implementation(libs.timber)
+
+    // Security - Database Encryption
+    implementation(libs.sqlcipher)
+    implementation(libs.sqlite.ktx)
+
+    // Security - Encrypted SharedPreferences
+    implementation(libs.security.crypto)
 
     // Testing
     testImplementation(libs.junit)

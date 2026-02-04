@@ -23,6 +23,9 @@ timber = "5.0.1"
 turbine = "1.0.0"
 androidx-test-core = "1.5.0"
 androidx-test-runner = "1.5.2"
+sqlcipher = "4.5.4"
+sqlite = "2.4.0"
+security-crypto = "1.1.0-alpha06"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -76,6 +79,11 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 
 # Logging
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+
+# Security
+sqlcipher = { module = "net.zetetic:android-database-sqlcipher", version.ref = "sqlcipher" }
+sqlite-ktx = { module = "androidx.sqlite:sqlite-ktx", version.ref = "sqlite" }
+security-crypto = { module = "androidx.security:security-crypto", version.ref = "security-crypto" }
 
 # Testing
 junit = { module = "junit:junit", version.ref = "junit" }

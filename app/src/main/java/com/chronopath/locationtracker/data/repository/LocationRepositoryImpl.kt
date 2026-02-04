@@ -25,9 +25,7 @@ class LocationRepositoryImpl(
     }
 
     override suspend fun insertLocation(location: Location) {
-        Timber.tag("DB").d("insertLocation - lat: %.6f, lon: %.6f, timestamp: %s".format(
-            location.latitude, location.longitude, location.timestamp
-        ))
+        Timber.tag("DB").d("insertLocation - timestamp: %s".format(location.timestamp))
         locationDao.insertLocation(LocationMapper.mapToEntity(location))
     }
 

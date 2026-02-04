@@ -147,9 +147,7 @@ class LocationTrackingService : Service() {
                     Timber.tag("Service").e(e, "Error collecting location updates")
                 }
                 .collect { location ->
-                    Timber.tag("Service").d("Location received - lat: %.6f, lon: %.6f, accuracy: %.1fm".format(
-                        location.latitude, location.longitude, location.accuracy
-                    ))
+                    Timber.tag("Service").d("Location received, accuracy: %.1fm".format(location.accuracy))
                     repository.saveLocation(location)
                 }
         }

@@ -16,3 +16,4 @@
 local.properties
 debug-data/
 .kotlin/
+.todo_task.md

@@ -18,7 +18,10 @@ interface LocationDao {
     
     @Query("SELECT COUNT(*) FROM locations")
     fun getLocationCount(): Flow<Int>
-    
+
+    @Query("SELECT COUNT(*) FROM locations")
+    fun getLocationCountSync(): Int
+
     @Query("DELETE FROM locations")
     suspend fun deleteAllLocations()
 }

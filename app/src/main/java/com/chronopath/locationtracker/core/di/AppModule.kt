@@ -3,6 +3,7 @@ package com.chronopath.locationtracker.core.di
 import android.content.Context
 import androidx.room.Room
 import com.chronopath.locationtracker.core.controller.TrackingControllerImpl
+import com.chronopath.locationtracker.core.security.SecureKeyManager
 import com.chronopath.locationtracker.data.local.LocationDatabase
 import com.chronopath.locationtracker.data.repository.LocationRepositoryImpl
 import com.chronopath.locationtracker.data.settings.SettingsRepository
@@ -17,6 +18,8 @@ import com.chronopath.locationtracker.domain.usecase.GetLocationCountUseCase
 import com.chronopath.locationtracker.domain.usecase.GetLocationsUseCase
 import com.chronopath.locationtracker.domain.usecase.StartTrackingUseCase
 import com.chronopath.locationtracker.domain.usecase.StopTrackingUseCase
+import net.sqlcipher.database.SupportFactory
+import timber.log.Timber
 
 object AppModule {
     @Volatile
@@ -25,13 +28,34 @@ object AppModule {
     @Volatile
     private var trackingController: TrackingController? = null
 
+    @Volatile
+    private var secureKeyManager: SecureKeyManager? = null
+
+    private fun provideSecureKeyManager(context: Context): SecureKeyManager {
+        return secureKeyManager ?: synchronized(this) {
+            secureKeyManager ?: SecureKeyManager(context.applicationContext)
+                .also { secureKeyManager = it }
+        }
+    }
+
     private fun provideDatabase(context: Context): LocationDatabase {
         return database ?: synchronized(this) {
-            database ?: Room.databaseBuilder(
-                context.applicationContext,
-                LocationDatabase::class.java,
-                "location_tracker.db"
-            ).build().also { database = it }
+            database ?: run {
+                val keyManager = provideSecureKeyManager(context)
+                val passphrase = keyManager.getOrCreateDatabasePassphrase()
+                val factory = SupportFactory(passphrase)
+
+                Timber.tag("Security").i("Creating encrypted database")
+
+                Room.databaseBuilder(
+                    context.applicationContext,
+                    LocationDatabase::class.java,
+                    "location_tracker_encrypted.db"
+                )
+                    .openHelperFactory(factory)
+                    .build()
+                    .also { database = it }
+            }
         }
     }
 
