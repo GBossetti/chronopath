@@ -9,6 +9,22 @@ Android location tracking app built with Clean Architecture and Jetpack Compose.
 - **Context Capture** - Records battery level, charging state, and network type with each location
 - **Automatic Recovery** - Workers restore tracking after app kill or device restart
 - **Battery Estimates** - Settings show expected battery consumption for each interval
+- **Encrypted Storage** - All location data encrypted at rest with SQLCipher
+
+## Security
+
+All sensitive data is encrypted and protected:
+
+| Protection | Implementation |
+|------------|----------------|
+| Database | SQLCipher AES-256 encryption |
+| Preferences | EncryptedSharedPreferences |
+| Key Storage | Android Keystore |
+| Network | HTTPS enforced, no cleartext |
+| Backups | Cloud backup disabled |
+| Release Builds | ProGuard/R8 obfuscation |
+
+Coordinates are never logged to logcat in any build variant.
 
 ## Requirements
 
@@ -45,7 +61,8 @@ Output APK: `app/build/outputs/apk/debug/ChronoPath_v{version}_(Build{code})_deb
 
 - **Language**: Kotlin
 - **UI**: Jetpack Compose (Material3)
-- **Database**: Room
+- **Database**: Room + SQLCipher (encrypted)
+- **Security**: AndroidX Security Crypto
 - **Background**: WorkManager
 - **Location**: Google Play Services Location
 - **Async**: Coroutines + Flow

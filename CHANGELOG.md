@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-02-04
+
+### Security
+- **Database encryption** - SQLCipher encrypts all location data at rest
+- **Encrypted SharedPreferences** - Device ID now stored with AES-256 encryption
+- **Sensitive logging removed** - Coordinates no longer appear in logcat
+- **ProGuard/R8 enabled** - Release builds are obfuscated and minified
+- **Cloud backup disabled** - Prevents location data from syncing to Google
+- **Network security config** - Enforces HTTPS, disables cleartext traffic
+
+### Added
+- `SecureKeyManager` - Manages encryption keys via Android Keystore
+- `DatabaseMigrationHelper` - Automatically migrates existing data to encrypted database
+- `network_security_config.xml` - Network security policy
+
+### Changed
+- Database file renamed from `location_tracker.db` to `location_tracker_encrypted.db`
+- `DeviceIdManager` migrates legacy unencrypted prefs automatically
+- `AppModule` now creates encrypted Room database with SupportFactory
+
+### Dependencies
+- Added `net.zetetic:android-database-sqlcipher:4.5.4`
+- Added `androidx.sqlite:sqlite-ktx:2.4.0`
+- Added `androidx.security:security-crypto:1.1.0-alpha06`
+
 ## [1.2.1] - 2026-01-26
 
 ### Fixed

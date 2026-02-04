@@ -87,6 +87,7 @@ core/            Cross-cutting concerns
 ├── di/          AppModule (service locator pattern for DI)
 ├── common/      Constants, Result<T> sealed class
 ├── controller/  TrackingController implementation (TrackingControllerImpl)
+├── security/    Encryption and key management (SecureKeyManager, DatabaseMigrationHelper)
 ├── services/    Foreground service (LocationTrackingService, NotificationHelper)
 └── workers/     WorkManager workers for background tasks
 ```
@@ -112,14 +113,38 @@ core/            Cross-cutting concerns
 - `FusedLocationDataSource`: Google Play Services location provider with configurable accuracy/intervals
 - `AndroidBatteryDataSource`: Battery state via BroadcastReceiver + callbackFlow
 - `AndroidNetworkDataSource`: Network connectivity detection
-- `DeviceIdManager`: Persistent installation UUID via SharedPreferences
+- `DeviceIdManager`: Persistent installation UUID via EncryptedSharedPreferences
+
+### Security
+
+All sensitive data is encrypted at rest:
+
+- **Database**: SQLCipher with AES-256 encryption via `SupportFactory`
+- **Preferences**: `EncryptedSharedPreferences` for device ID storage
+- **Key Management**: `SecureKeyManager` stores keys in Android Keystore
+- **Migration**: `DatabaseMigrationHelper` handles upgrade from unencrypted to encrypted DB
+
+Security-related files:
+```
+core/security/
+├── SecureKeyManager.kt        # Keystore-backed key management
+└── DatabaseMigrationHelper.kt # Unencrypted → encrypted DB migration
+```
+
+Release build protections:
+- ProGuard/R8 obfuscation (`isMinifyEnabled = true`)
+- Resource shrinking (`isShrinkResources = true`)
+- Cloud backup disabled (`android:allowBackup="false"`)
+- Network security config enforces HTTPS
 
 ## Key Files
 
 - `MainActivity.kt`: Single Compose-based entry point
-- `LocationTrackerApplication.kt`: Application class for app-level initialization
+- `LocationTrackerApplication.kt`: Application class, handles DB migration on startup
 - `ui/MainViewModel.kt`: ViewModel managing tracking state and user actions
-- `core/di/AppModule.kt`: Manual dependency injection setup
+- `core/di/AppModule.kt`: Manual dependency injection, creates encrypted database
+- `core/security/SecureKeyManager.kt`: Manages SQLCipher encryption keys via Keystore
+- `core/security/DatabaseMigrationHelper.kt`: Migrates unencrypted data to encrypted DB
 - `core/services/LocationTrackingService.kt`: Foreground service for continuous location tracking
 - `domain/controller/TrackingController.kt`: Interface for tracking control (Dependency Inversion)
 - `domain/repository/LocationRepository.kt`: Main data access interface
@@ -130,7 +155,8 @@ core/            Cross-cutting concerns
 
 - **Language**: Kotlin 1.9.22
 - **UI**: Jetpack Compose with Material3
-- **Database**: Room 2.6.1
+- **Database**: Room 2.6.1 + SQLCipher 4.5.4
+- **Security**: androidx.security-crypto 1.1.0-alpha06
 - **Async**: Coroutines 1.7.3 + kotlinx-datetime
 - **Location**: Google Play Services Location 21.0.1
 - **Background**: WorkManager 2.9.0
