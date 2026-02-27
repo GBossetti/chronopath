@@ -12,7 +12,13 @@ private const val STAY_THRESHOLD_METERS = 50f
 
 private enum class TrackingState { STAY, TRIP }
 
-class AnalyzeMovementUseCase {
+class AnalyzeMovementUseCase(
+    private val calcDistance: (Double, Double, Double, Double) -> Float = { lat1, lon1, lat2, lon2 ->
+        val result = FloatArray(1)
+        android.location.Location.distanceBetween(lat1, lon1, lat2, lon2, result)
+        result[0]
+    }
+) {
 
     /**
      * Analyzes a time-sorted list of locations and returns interleaved Stay and Trip events.
@@ -44,13 +50,10 @@ class AnalyzeMovementUseCase {
 
         for (i in 1 until locations.size) {
             val point = locations[i]
-            val distanceResult = FloatArray(1)
-            android.location.Location.distanceBetween(
+            val dist = calcDistance(
                 previousPoint.latitude, previousPoint.longitude,
-                point.latitude, point.longitude,
-                distanceResult
+                point.latitude, point.longitude
             )
-            val dist = distanceResult[0]
 
             when (state) {
                 TrackingState.STAY -> {
