@@ -1,0 +1,164 @@
+package com.chronopath.locationtracker.domain.usecase
+
+import com.chronopath.locationtracker.domain.model.DaySummary
+import com.chronopath.locationtracker.domain.model.Location
+import com.chronopath.locationtracker.domain.model.MovementEvent
+import com.chronopath.locationtracker.domain.model.StayPeriod
+import com.chronopath.locationtracker.domain.model.Trip
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+
+private const val STAY_THRESHOLD_METERS = 50f
+
+private enum class TrackingState { STAY, TRIP }
+
+class AnalyzeMovementUseCase {
+
+    /**
+     * Analyzes a time-sorted list of locations and returns interleaved Stay and Trip events.
+     */
+    fun analyze(locations: List<Location>): List<MovementEvent> {
+        if (locations.isEmpty()) return emptyList()
+        if (locations.size == 1) {
+            val loc = locations.first()
+            return listOf(
+                MovementEvent.Stay(
+                    StayPeriod(
+                        centroidLat = loc.latitude,
+                        centroidLon = loc.longitude,
+                        startTime = loc.timestamp,
+                        endTime = loc.timestamp,
+                        pointCount = 1
+                    )
+                )
+            )
+        }
+
+        val events = mutableListOf<MovementEvent>()
+
+        var state = TrackingState.STAY
+        var stayPoints = mutableListOf(locations.first())
+        var tripPoints = mutableListOf<Location>()
+        var tripDistance = 0f
+        var previousPoint = locations.first()
+
+        for (i in 1 until locations.size) {
+            val point = locations[i]
+            val distanceResult = FloatArray(1)
+            android.location.Location.distanceBetween(
+                previousPoint.latitude, previousPoint.longitude,
+                point.latitude, point.longitude,
+                distanceResult
+            )
+            val dist = distanceResult[0]
+
+            when (state) {
+                TrackingState.STAY -> {
+                    if (dist < STAY_THRESHOLD_METERS) {
+                        stayPoints.add(point)
+                    } else {
+                        events.add(buildStay(stayPoints))
+                        tripPoints = mutableListOf(previousPoint, point)
+                        tripDistance = dist
+                        state = TrackingState.TRIP
+                    }
+                }
+                TrackingState.TRIP -> {
+                    if (dist < STAY_THRESHOLD_METERS) {
+                        events.add(buildTrip(tripPoints, tripDistance))
+                        stayPoints = mutableListOf(previousPoint, point)
+                        tripPoints = mutableListOf()
+                        tripDistance = 0f
+                        state = TrackingState.STAY
+                    } else {
+                        tripPoints.add(point)
+                        tripDistance += dist
+                    }
+                }
+            }
+
+            previousPoint = point
+        }
+
+        // Emit the final open segment
+        when (state) {
+            TrackingState.STAY -> events.add(buildStay(stayPoints))
+            TrackingState.TRIP -> events.add(buildTrip(tripPoints, tripDistance))
+        }
+
+        return events
+    }
+
+    private fun buildStay(points: List<Location>): MovementEvent.Stay {
+        val centroidLat = points.map { it.latitude }.average()
+        val centroidLon = points.map { it.longitude }.average()
+        return MovementEvent.Stay(
+            StayPeriod(
+                centroidLat = centroidLat,
+                centroidLon = centroidLon,
+                startTime = points.first().timestamp,
+                endTime = points.last().timestamp,
+                pointCount = points.size
+            )
+        )
+    }
+
+    private fun buildTrip(points: List<Location>, totalDistance: Float): MovementEvent.Trip {
+        return MovementEvent.Trip(
+            Trip(
+                startTime = points.first().timestamp,
+                endTime = points.last().timestamp,
+                totalDistanceMeters = totalDistance,
+                pointCount = points.size
+            )
+        )
+    }
+
+    /**
+     * Groups a list of movement events by local date and returns per-day summaries.
+     */
+    fun summarizeByDay(events: List<MovementEvent>): List<DaySummary> {
+        val tz = TimeZone.currentSystemDefault()
+
+        data class DayAccumulator(
+            var totalDistanceMeters: Float = 0f,
+            var totalStayDurationMs: Long = 0L,
+            var totalTripDurationMs: Long = 0L,
+            var tripCount: Int = 0,
+            var stayCount: Int = 0
+        )
+
+        val dayMap = mutableMapOf<kotlinx.datetime.LocalDate, DayAccumulator>()
+
+        for (event in events) {
+            when (event) {
+                is MovementEvent.Stay -> {
+                    val date = event.period.startTime.toLocalDateTime(tz).date
+                    val acc = dayMap.getOrPut(date) { DayAccumulator() }
+                    acc.totalStayDurationMs += event.period.durationMs
+                    acc.stayCount++
+                }
+                is MovementEvent.Trip -> {
+                    val date = event.trip.startTime.toLocalDateTime(tz).date
+                    val acc = dayMap.getOrPut(date) { DayAccumulator() }
+                    acc.totalDistanceMeters += event.trip.totalDistanceMeters
+                    acc.totalTripDurationMs += event.trip.durationMs
+                    acc.tripCount++
+                }
+            }
+        }
+
+        return dayMap.entries
+            .sortedBy { it.key }
+            .map { (date, acc) ->
+                DaySummary(
+                    date = date,
+                    totalDistanceMeters = acc.totalDistanceMeters,
+                    totalStayDurationMs = acc.totalStayDurationMs,
+                    totalTripDurationMs = acc.totalTripDurationMs,
+                    tripCount = acc.tripCount,
+                    stayCount = acc.stayCount
+                )
+            }
+    }
+}

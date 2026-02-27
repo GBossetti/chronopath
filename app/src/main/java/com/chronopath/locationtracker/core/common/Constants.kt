@@ -22,4 +22,8 @@ object Constants {
 
     // Export
     const val EXPORT_FILE_NAME = "locations_export.json"
+
+    // Analytics insight thresholds
+    const val INSIGHT_MOSTLY_STILL_M = 500f   // < 500 m → "barely moved"
+    const val INSIGHT_ACTIVE_M       = 5000f  // > 5 km  → "active day"
 }

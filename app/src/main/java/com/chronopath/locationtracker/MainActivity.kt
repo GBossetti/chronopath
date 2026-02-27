@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.chronopath.locationtracker.ui.analytics.AnalyticsScreen
 import com.chronopath.locationtracker.ui.screen.MainScreen
 import com.chronopath.locationtracker.ui.settings.SettingsScreen
 import com.chronopath.locationtracker.ui.theme.LocationTrackerTheme
@@ -20,15 +21,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LocationTrackerTheme {
-                var showSettings by remember { mutableStateOf(false) }
+                var showSettings  by remember { mutableStateOf(false) }
+                var showAnalytics by remember { mutableStateOf(false) }
 
-                if (showSettings) {
-                    SettingsScreen(
+                when {
+                    showSettings  -> SettingsScreen(
                         onNavigateBack = { showSettings = false }
                     )
-                } else {
-                    MainScreen(
-                        onNavigateToSettings = { showSettings = true }
+                    showAnalytics -> AnalyticsScreen(
+                        onNavigateBack = { showAnalytics = false }
+                    )
+                    else -> MainScreen(
+                        onNavigateToSettings  = { showSettings  = true },
+                        onNavigateToAnalytics = { showAnalytics = true }
                     )
                 }
             }
