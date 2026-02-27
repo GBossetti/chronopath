@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -84,7 +84,7 @@ fun MainScreen(
                 actions = {
                     IconButton(onClick = onNavigateToAnalytics) {
                         Icon(
-                            imageVector = Icons.Default.List,
+                            imageVector = Icons.Default.BarChart,
                             contentDescription = "Analytics"
                         )
                     }
