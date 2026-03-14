@@ -48,4 +48,9 @@ class ConstantsTest {
         assertEquals(1_200_000L, liteIntervalMs)
         assertEquals(20L, liteIntervalMs / (60 * 1000))
     }
+
+    @Test fun `log dir name is logs`() = assertEquals("logs", Constants.LOG_DIR_NAME)
+    @Test fun `log max files is 7`()   = assertEquals(7, Constants.LOG_MAX_FILES)
+    @Test fun `log file prefix is app_`() = assertEquals("app_", Constants.LOG_FILE_PREFIX)
+    @Test fun `log file extension is dot log`() = assertEquals(".log", Constants.LOG_FILE_EXTENSION)
 }

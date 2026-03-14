@@ -28,9 +28,8 @@ class DataAggregator(
             val isCharging = batteryDataSource.getCurrentChargingState()
             val networkType = networkDataSource.getCurrentNetworkType()
 
-            AppLogger.d("Aggregator", "location update: lat=%.5f lon=%.5f acc=%.1fm bat=%d%% charging=%b net=%s"
-                .format(androidLocation.latitude, androidLocation.longitude,
-                        androidLocation.accuracy, batteryPercent, isCharging, networkType))
+            AppLogger.d("Aggregator", "location update: acc=%.1fm bat=%d%% charging=%b net=%s"
+                .format(androidLocation.accuracy, batteryPercent, isCharging, networkType))
 
             Location(
                 latitude = androidLocation.latitude,
