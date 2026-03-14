@@ -5,6 +5,7 @@ import com.chronopath.locationtracker.domain.model.Location
 import com.chronopath.locationtracker.domain.model.MovementEvent
 import com.chronopath.locationtracker.domain.model.StayPeriod
 import com.chronopath.locationtracker.domain.model.Trip
+import com.chronopath.locationtracker.core.common.AppLogger
 import kotlin.math.asin
 import kotlin.math.cos
 import kotlin.math.pow
@@ -32,6 +33,7 @@ class AnalyzeMovementUseCase(
      * Analyzes a time-sorted list of locations and returns interleaved Stay and Trip events.
      */
     fun analyze(locations: List<Location>): List<MovementEvent> {
+        AppLogger.d("Movement", "analyze() called — ${locations.size} locations")
         if (locations.isEmpty()) return emptyList()
         if (locations.size == 1) {
             val loc = locations.first()
@@ -69,6 +71,7 @@ class AnalyzeMovementUseCase(
                         stayPoints.add(point)
                     } else {
                         events.add(buildStay(stayPoints))
+                        AppLogger.d("Movement", "STAY→TRIP at i=$i dist=%.1fm".format(dist))
                         tripPoints = mutableListOf(previousPoint, point)
                         tripDistance = dist
                         state = TrackingState.TRIP
@@ -77,6 +80,7 @@ class AnalyzeMovementUseCase(
                 TrackingState.TRIP -> {
                     if (dist < STAY_THRESHOLD_METERS) {
                         events.add(buildTrip(tripPoints, tripDistance))
+                        AppLogger.d("Movement", "TRIP→STAY at i=$i dist=%.1fm".format(dist))
                         stayPoints = mutableListOf(previousPoint, point)
                         tripPoints = mutableListOf()
                         tripDistance = 0f
@@ -97,6 +101,7 @@ class AnalyzeMovementUseCase(
             TrackingState.TRIP -> events.add(buildTrip(tripPoints, tripDistance))
         }
 
+        AppLogger.i("Movement", "analyze() done — ${events.size} events")
         return events
     }
 

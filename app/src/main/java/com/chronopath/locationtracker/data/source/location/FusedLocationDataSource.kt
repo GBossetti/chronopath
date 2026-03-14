@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.tasks.await
-import timber.log.Timber
+import com.chronopath.locationtracker.core.common.AppLogger
 
 class FusedLocationDataSource(
     private val context: Context
@@ -25,7 +25,7 @@ class FusedLocationDataSource(
 
     @SuppressLint("MissingPermission")
     override suspend fun startTracking(intervalMillis: Long, minDistanceMeters: Float) {
-        Timber.tag("Location").i("startTracking - interval: ${intervalMillis}ms, minDistance: ${minDistanceMeters}m")
+        AppLogger.i("Location", "startTracking - interval: ${intervalMillis}ms, minDistance: ${minDistanceMeters}m")
         // Stop any existing tracking
         stopTracking()
 
@@ -38,12 +38,12 @@ class FusedLocationDataSource(
             setMinUpdateDistanceMeters(minDistanceMeters)
             setWaitForAccurateLocation(false)
         }.build()
-        Timber.tag("Location").d("LocationRequest configured with HIGH_ACCURACY priority")
+        AppLogger.d("Location", "LocationRequest configured with HIGH_ACCURACY priority")
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let { location ->
-                    Timber.tag("Location").d("Location update received, accuracy: %.1fm, provider: %s".format(
+                    AppLogger.d("Location", "Location update received, accuracy: %.1fm, provider: %s".format(
                         location.accuracy, location.provider
                     ))
                     _locationFlow.value = location
@@ -58,14 +58,14 @@ class FusedLocationDataSource(
                 context.mainLooper
             ).await()
         }
-        Timber.tag("Location").i("Location updates started successfully")
+        AppLogger.i("Location", "Location updates started successfully")
     }
 
     override suspend fun stopTracking() {
-        Timber.tag("Location").i("stopTracking - Removing location updates")
+        AppLogger.i("Location", "stopTracking - Removing location updates")
         locationCallback?.let {
             fusedLocationClient.removeLocationUpdates(it)
-            Timber.tag("Location").d("Location callback removed")
+            AppLogger.d("Location", "Location callback removed")
         }
         locationCallback = null
     }

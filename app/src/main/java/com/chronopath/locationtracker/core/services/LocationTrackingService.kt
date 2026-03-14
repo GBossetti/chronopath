@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import timber.log.Timber
+import com.chronopath.locationtracker.core.common.AppLogger
 
 /**
  * Foreground service for continuous location tracking.
@@ -81,10 +81,10 @@ class LocationTrackingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Timber.tag("Service").i("onCreate - LocationTrackingService created")
+        AppLogger.i("Service", "onCreate - LocationTrackingService created")
         NotificationHelper.createNotificationChannel(this)
         initializeDependencies()
-        Timber.tag("Service").d("Dependencies initialized")
+        AppLogger.d("Service", "Dependencies initialized")
     }
 
     private fun initializeDependencies() {
@@ -103,7 +103,7 @@ class LocationTrackingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Timber.tag("Service").d("onStartCommand - action: ${intent?.action}, flags: $flags, startId: $startId")
+        AppLogger.d("Service", "onStartCommand - action: ${intent?.action}, flags: $flags, startId: $startId")
         when (intent?.action) {
             ACTION_START -> startTracking()
             ACTION_STOP -> stopTracking()
@@ -112,7 +112,7 @@ class LocationTrackingService : Service() {
     }
 
     private fun startTracking() {
-        Timber.tag("Service").i("startTracking - Starting foreground service")
+        AppLogger.i("Service", "startTracking - Starting foreground service")
         val notification = NotificationHelper.buildTrackingNotification(this)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -124,7 +124,7 @@ class LocationTrackingService : Service() {
         } else {
             startForeground(Constants.NOTIFICATION_ID, notification)
         }
-        Timber.tag("Service").d("Foreground notification displayed")
+        AppLogger.d("Service", "Foreground notification displayed")
 
         serviceScope.launch {
             settingsRepository.setIsTrackingActive(true)
@@ -134,7 +134,7 @@ class LocationTrackingService : Service() {
         trackingJob = serviceScope.launch {
             val intervalMs = settingsRepository.getTrackingIntervalMs()
             val minDistanceMeters = settingsRepository.getMinDistanceMeters()
-            Timber.tag("Service").d("Starting location updates - interval: ${intervalMs}ms, minDistance: ${minDistanceMeters}m")
+            AppLogger.d("Service", "Starting location updates - interval: ${intervalMs}ms, minDistance: ${minDistanceMeters}m")
             // Start location updates
             locationDataSource.startTracking(
                 intervalMillis = intervalMs,
@@ -144,40 +144,40 @@ class LocationTrackingService : Service() {
             // Collect and save aggregated locations
             dataAggregator.getAggregatedLocations()
                 .catch { e ->
-                    Timber.tag("Service").e(e, "Error collecting location updates")
+                    AppLogger.e("Service", "Error collecting location updates", e)
                 }
                 .collect { location ->
-                    Timber.tag("Service").d("Location received, accuracy: %.1fm".format(location.accuracy))
+                    AppLogger.d("Service", "Location received, accuracy: %.1fm".format(location.accuracy))
                     repository.saveLocation(location)
                 }
         }
-        Timber.tag("Service").i("Location tracking started successfully")
+        AppLogger.i("Service", "Location tracking started successfully")
     }
 
     private fun stopTracking() {
-        Timber.tag("Service").i("stopTracking - Stopping location tracking")
+        AppLogger.i("Service", "stopTracking - Stopping location tracking")
         trackingJob?.cancel()
         trackingJob = null
 
         serviceScope.launch {
             locationDataSource.stopTracking()
-            Timber.tag("Service").d("Location updates stopped")
+            AppLogger.d("Service", "Location updates stopped")
             settingsRepository.setIsTrackingActive(false)
         }
 
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-        Timber.tag("Service").i("Service stopped")
+        AppLogger.i("Service", "Service stopped")
     }
 
     override fun onDestroy() {
-        Timber.tag("Service").i("onDestroy - Service being destroyed")
+        AppLogger.i("Service", "onDestroy - Service being destroyed")
         super.onDestroy()
         trackingJob?.cancel()
         // Note: We don't set isTrackingActive to false here because the service being destroyed
         // doesn't mean the user stopped tracking - it could be a system kill that needs recovery
         serviceScope.cancel()
-        Timber.tag("Service").d("Resources cleaned up")
+        AppLogger.d("Service", "Resources cleaned up")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

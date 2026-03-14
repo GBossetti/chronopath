@@ -26,4 +26,10 @@ object Constants {
     // Analytics insight thresholds
     const val INSIGHT_MOSTLY_STILL_M = 500f   // < 500 m → "barely moved"
     const val INSIGHT_ACTIVE_M       = 5000f  // > 5 km  → "active day"
+
+    // Logging
+    const val LOG_DIR_NAME       = "logs"
+    const val LOG_MAX_FILES      = 7
+    const val LOG_FILE_PREFIX    = "app_"
+    const val LOG_FILE_EXTENSION = ".log"
 }

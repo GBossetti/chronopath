@@ -2,6 +2,7 @@ package com.chronopath.locationtracker.data.source.aggregator
 
 import com.chronopath.locationtracker.data.source.battery.BatteryDataSource
 import com.chronopath.locationtracker.data.source.id.DeviceIdManager
+import com.chronopath.locationtracker.core.common.AppLogger
 import com.chronopath.locationtracker.data.source.location.LocationDataSource
 import com.chronopath.locationtracker.data.source.network.NetworkDataSource
 import com.chronopath.locationtracker.domain.model.Location
@@ -26,6 +27,10 @@ class DataAggregator(
             val batteryPercent = batteryDataSource.getCurrentBatteryPercentage()
             val isCharging = batteryDataSource.getCurrentChargingState()
             val networkType = networkDataSource.getCurrentNetworkType()
+
+            AppLogger.d("Aggregator", "location update: lat=%.5f lon=%.5f acc=%.1fm bat=%d%% charging=%b net=%s"
+                .format(androidLocation.latitude, androidLocation.longitude,
+                        androidLocation.accuracy, batteryPercent, isCharging, networkType))
 
             Location(
                 latitude = androidLocation.latitude,
